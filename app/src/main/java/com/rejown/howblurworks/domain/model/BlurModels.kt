@@ -93,6 +93,41 @@ data class BlurStep(
 /**
  * Overall blur process state
  */
+/**
+ * Educational theory item for learning section
+ */
+data class BlurTheoryItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val icon: String, // Material icon name
+    val content: String,
+    val bulletPoints: List<String> = emptyList()
+)
+
+/**
+ * Sample image for quick testing
+ */
+data class SampleImage(
+    val id: String,
+    val name: String,
+    val drawableResId: Int,
+    val description: String
+)
+
+/**
+ * Kernel preview data for display
+ */
+data class KernelPreview(
+    val matrix: List<List<String>>,
+    val description: String,
+    val blurType: BlurType,
+    val size: KernelSize
+)
+
+/**
+ * Overall blur process state
+ */
 data class BlurProcessState(
     val originalBitmap: Bitmap? = null,
     val processedBitmap: Bitmap? = null,

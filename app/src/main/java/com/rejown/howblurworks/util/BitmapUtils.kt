@@ -14,7 +14,7 @@ import java.io.IOException
 
 object BitmapUtils {
 
-    private const val MAX_VISUALIZATION_DIMENSION = 200
+    private const val MAX_VISUALIZATION_DIMENSION = 400
 
     /**
      * Load and scale bitmap for visualization
