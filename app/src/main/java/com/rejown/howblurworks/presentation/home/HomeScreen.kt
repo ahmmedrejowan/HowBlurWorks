@@ -828,6 +828,11 @@ private fun SampleImageCard(
 
 @Composable
 private fun InteractiveKernelPreview(preview: KernelPreview) {
+    // Fixed dimensions for consistent height
+    val matrixContainerHeight = 200.dp
+    val gap = 3.dp
+    val padding = 12.dp
+
     Column(modifier = Modifier.fillMaxWidth()) {
         // Divider line
         Box(
@@ -839,21 +844,31 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Kernel matrix display with improved styling
+        // Kernel matrix display with fixed height
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(matrixContainerHeight)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .padding(12.dp),
+                .padding(padding),
             contentAlignment = Alignment.Center
         ) {
+            val matrixSize = preview.matrix.size
+            // Calculate cell size to fit within container
+            // Available height = containerHeight - 2*padding
+            // Total gaps = (matrixSize - 1) * gap
+            // Cell size = (availableHeight - totalGaps) / matrixSize
+            val availableSpace = matrixContainerHeight - (padding * 2)
+            val totalGapSpace = gap * (matrixSize - 1)
+            val cellSize = (availableSpace - totalGapSpace) / matrixSize
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(gap)
             ) {
                 preview.matrix.forEachIndexed { rowIndex, row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                         row.forEachIndexed { colIndex, value ->
                             val isCenter = rowIndex == preview.matrix.size / 2 &&
                                     colIndex == row.size / 2
@@ -863,12 +878,6 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
                             // Calculate intensity for gradient effect
                             val maxValue = preview.matrix.flatten().mapNotNull { it.toFloatOrNull() }.maxOrNull() ?: 1f
                             val intensity = if (maxValue > 0) (valueFloat / maxValue).coerceIn(0f, 1f) else 0f
-
-                            val cellSize = when (preview.size) {
-                                KernelSize.SMALL -> 52.dp
-                                KernelSize.MEDIUM -> 38.dp
-                                KernelSize.LARGE -> 30.dp
-                            }
 
                             Box(
                                 modifier = Modifier
@@ -890,15 +899,17 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
                                     valueFloat < 0.01f -> ".00"
                                     else -> String.format("%.2f", valueFloat).removePrefix("0")
                                 }
+                                // Dynamic font size based on cell size
+                                val fontSize = when {
+                                    matrixSize <= 3 -> 11.sp
+                                    matrixSize <= 5 -> 9.sp
+                                    else -> 7.sp
+                                }
                                 Text(
                                     text = displayValue,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontFamily = FontFamily.Monospace,
-                                    fontSize = when (preview.size) {
-                                        KernelSize.SMALL -> 11.sp
-                                        KernelSize.MEDIUM -> 9.sp
-                                        KernelSize.LARGE -> 7.sp
-                                    },
+                                    fontSize = fontSize,
                                     fontWeight = if (isCenter) FontWeight.Bold else FontWeight.Normal,
                                     color = when {
                                         isCenter -> MaterialTheme.colorScheme.onPrimary
@@ -915,7 +926,8 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Description as info chips
+        // Description as info chips with fixed height
+        val descriptionBoxHeight = 56.dp
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -923,19 +935,27 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
             val infoItems = preview.description.split("\n")
             infoItems.forEach { info ->
                 if (info.isNotBlank()) {
-                    Text(
-                        text = info,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Box(
                         modifier = Modifier
                             .weight(1f)
+                            .height(descriptionBoxHeight)
                             .background(
                                 MaterialTheme.colorScheme.surfaceContainerHighest,
                                 RoundedCornerShape(8.dp)
                             )
                             .padding(horizontal = 10.dp, vertical = 8.dp),
-                        lineHeight = 16.sp
-                    )
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = info,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 16.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
