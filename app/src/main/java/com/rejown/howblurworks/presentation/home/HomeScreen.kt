@@ -85,6 +85,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rejown.howblurworks.R
+import com.rejown.howblurworks.data.ResultHolder
 import com.rejown.howblurworks.domain.model.BlurTheoryItem
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelPreview
@@ -325,6 +326,12 @@ fun HomeScreen(
             Button(
                 onClick = {
                     uiState.selectedImageUri?.let { uri ->
+                        // Store bitmap in holder for sample images (URI parsing won't work for sample://)
+                        if (uri.startsWith("sample://")) {
+                            ResultHolder.inputBitmap = uiState.selectedBitmap
+                        } else {
+                            ResultHolder.clearInput()
+                        }
                         onStartVisualization(uri, uiState.selectedBlurType, uiState.selectedKernelSize)
                     }
                 },

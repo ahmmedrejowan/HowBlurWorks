@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.rejown.howblurworks.data.ResultHolder
 import androidx.lifecycle.viewModelScope
 import com.rejown.howblurworks.domain.engine.BlurProcessor
 import com.rejown.howblurworks.domain.engine.KernelGenerator
@@ -130,11 +131,15 @@ class VisualizationViewModel : ViewModel() {
             }
 
             try {
-                val uri = Uri.parse(imageUri)
-                val result = BitmapUtils.loadAndScaleForVisualization(context, uri)
+                // Check if this is a sample image (passed via ResultHolder)
+                val bitmap: Bitmap? = if (imageUri.startsWith("sample://")) {
+                    ResultHolder.inputBitmap
+                } else {
+                    val uri = Uri.parse(imageUri)
+                    BitmapUtils.loadAndScaleForVisualization(context, uri)?.first
+                }
 
-                if (result != null) {
-                    val (bitmap, _) = result
+                if (bitmap != null) {
                     val kernelConfig = KernelConfig(blurType, kernelSize)
                     val kernel = KernelGenerator.generate(kernelConfig)
                     val kernelDisplay = KernelGenerator.formatForDisplay(kernel)

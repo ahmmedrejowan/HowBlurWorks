@@ -9,6 +9,9 @@ import com.rejown.howblurworks.domain.model.KernelSize
  * Bitmaps cannot be passed through navigation arguments, so we use this holder.
  */
 object ResultHolder {
+    // Input bitmap for sample images (set by HomeScreen before navigation)
+    var inputBitmap: Bitmap? = null
+
     var originalBitmap: Bitmap? = null
     var blurredBitmap: Bitmap? = null
     var blurType: BlurType = BlurType.GAUSSIAN
@@ -39,6 +42,7 @@ object ResultHolder {
     }
 
     fun clear() {
+        inputBitmap = null
         originalBitmap = null
         blurredBitmap = null
         blurType = BlurType.GAUSSIAN
@@ -47,5 +51,9 @@ object ResultHolder {
         imageHeight = 0
         processedPixels = 0
         processingTimeMs = 0
+    }
+
+    fun clearInput() {
+        inputBitmap = null
     }
 }
