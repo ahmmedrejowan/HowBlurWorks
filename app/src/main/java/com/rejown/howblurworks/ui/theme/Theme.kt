@@ -9,50 +9,134 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+
+val LocalIsDarkTheme = staticCompositionLocalOf { true }
+
+enum class ThemeMode(val displayName: String) {
+    DARK("Dark"),
+    LIGHT("Light"),
+    SYSTEM("System Default")
+}
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = primaryDark,
+    onPrimary = onPrimaryDark,
+    primaryContainer = primaryContainerDark,
+    onPrimaryContainer = onPrimaryContainerDark,
+    secondary = secondaryDark,
+    onSecondary = onSecondaryDark,
+    secondaryContainer = secondaryContainerDark,
+    onSecondaryContainer = onSecondaryContainerDark,
+    tertiary = tertiaryDark,
+    onTertiary = onTertiaryDark,
+    tertiaryContainer = tertiaryContainerDark,
+    onTertiaryContainer = onTertiaryContainerDark,
+    error = DarkSurfaces.error,
+    onError = DarkSurfaces.onError,
+    errorContainer = DarkSurfaces.errorContainer,
+    onErrorContainer = DarkSurfaces.onErrorContainer,
+    background = DarkSurfaces.background,
+    onBackground = DarkSurfaces.onBackground,
+    surface = DarkSurfaces.surface,
+    onSurface = DarkSurfaces.onSurface,
+    surfaceVariant = DarkSurfaces.surfaceVariant,
+    onSurfaceVariant = DarkSurfaces.onSurfaceVariant,
+    outline = DarkSurfaces.outline,
+    outlineVariant = DarkSurfaces.outlineVariant,
+    scrim = DarkSurfaces.scrim,
+    inverseSurface = DarkSurfaces.inverseSurface,
+    inverseOnSurface = DarkSurfaces.inverseOnSurface,
+    inversePrimary = inversePrimaryDark,
+    surfaceDim = DarkSurfaces.surfaceDim,
+    surfaceBright = DarkSurfaces.surfaceBright,
+    surfaceContainerLowest = DarkSurfaces.surfaceContainerLowest,
+    surfaceContainerLow = DarkSurfaces.surfaceContainerLow,
+    surfaceContainer = DarkSurfaces.surfaceContainer,
+    surfaceContainerHigh = DarkSurfaces.surfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaces.surfaceContainerHighest,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = primaryLight,
+    onPrimary = onPrimaryLight,
+    primaryContainer = primaryContainerLight,
+    onPrimaryContainer = onPrimaryContainerLight,
+    secondary = secondaryLight,
+    onSecondary = onSecondaryLight,
+    secondaryContainer = secondaryContainerLight,
+    onSecondaryContainer = onSecondaryContainerLight,
+    tertiary = tertiaryLight,
+    onTertiary = onTertiaryLight,
+    tertiaryContainer = tertiaryContainerLight,
+    onTertiaryContainer = onTertiaryContainerLight,
+    error = LightSurfaces.error,
+    onError = LightSurfaces.onError,
+    errorContainer = LightSurfaces.errorContainer,
+    onErrorContainer = LightSurfaces.onErrorContainer,
+    background = LightSurfaces.background,
+    onBackground = LightSurfaces.onBackground,
+    surface = LightSurfaces.surface,
+    onSurface = LightSurfaces.onSurface,
+    surfaceVariant = LightSurfaces.surfaceVariant,
+    onSurfaceVariant = LightSurfaces.onSurfaceVariant,
+    outline = LightSurfaces.outline,
+    outlineVariant = LightSurfaces.outlineVariant,
+    scrim = LightSurfaces.scrim,
+    inverseSurface = LightSurfaces.inverseSurface,
+    inverseOnSurface = LightSurfaces.inverseOnSurface,
+    inversePrimary = inversePrimaryLight,
+    surfaceDim = LightSurfaces.surfaceDim,
+    surfaceBright = LightSurfaces.surfaceBright,
+    surfaceContainerLowest = LightSurfaces.surfaceContainerLowest,
+    surfaceContainerLow = LightSurfaces.surfaceContainerLow,
+    surfaceContainer = LightSurfaces.surfaceContainer,
+    surfaceContainerHigh = LightSurfaces.surfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaces.surfaceContainerHighest,
 )
 
 @Composable
 fun HowBlurWorksTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    themeMode: ThemeMode = ThemeMode.DARK,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = when (themeMode) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.SYSTEM -> systemInDarkTheme
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
-        darkTheme -> DarkColorScheme
+        isDarkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !isDarkTheme
+            insetsController.isAppearanceLightNavigationBars = !isDarkTheme
+        }
+    }
+
+    CompositionLocalProvider(LocalIsDarkTheme provides isDarkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
