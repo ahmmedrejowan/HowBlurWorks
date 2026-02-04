@@ -1,10 +1,12 @@
 package com.rejown.howblurworks.presentation.visualization
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,16 +49,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rejown.howblurworks.data.ResultHolder
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelSize
 import com.rejown.howblurworks.domain.model.PixelCalculation
@@ -132,12 +138,16 @@ fun VisualizationScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // Image Display
+                // Image Display with Cursor Overlay
                 ImageDisplayCard(
                     bitmap = uiState.displayBitmap,
+                    imageWidth = uiState.displayBitmap?.width ?: 0,
+                    imageHeight = uiState.displayBitmap?.height ?: 0,
                     currentX = uiState.currentX,
                     currentY = uiState.currentY,
-                    isRunning = uiState.isRunning
+                    kernelSize = uiState.kernelSize.size,
+                    isRunning = uiState.isRunning,
+                    progress = uiState.progress
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -190,7 +200,20 @@ fun VisualizationScreen(
                 if (uiState.isComplete) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = onNavigateToResult,
+                        onClick = {
+                            // Save data to ResultHolder before navigating
+                            ResultHolder.setResult(
+                                original = uiState.originalBitmap,
+                                blurred = uiState.finalBitmap ?: uiState.displayBitmap,
+                                type = uiState.blurType,
+                                size = uiState.kernelSize,
+                                width = uiState.originalBitmap?.width ?: 0,
+                                height = uiState.originalBitmap?.height ?: 0,
+                                pixels = uiState.processedPixels,
+                                timeMs = uiState.elapsedTimeMs
+                            )
+                            onNavigateToResult()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
@@ -207,10 +230,17 @@ fun VisualizationScreen(
 @Composable
 private fun ImageDisplayCard(
     bitmap: android.graphics.Bitmap?,
+    imageWidth: Int,
+    imageHeight: Int,
     currentX: Int,
     currentY: Int,
-    isRunning: Boolean
+    kernelSize: Int,
+    isRunning: Boolean,
+    progress: Float
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val processedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,36 +250,105 @@ private fun ImageDisplayCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            bitmap?.let {
+            bitmap?.let { bmp ->
+                // Calculate image display dimensions
+                val containerWidth = constraints.maxWidth.toFloat()
+                val containerHeight = constraints.maxHeight.toFloat()
+                val imageAspect = imageWidth.toFloat() / imageHeight.toFloat()
+                val containerAspect = containerWidth / containerHeight
+
+                val (displayWidth, displayHeight) = if (imageAspect > containerAspect) {
+                    containerWidth to (containerWidth / imageAspect)
+                } else {
+                    (containerHeight * imageAspect) to containerHeight
+                }
+
+                val offsetX = (containerWidth - displayWidth) / 2
+                val offsetY = (containerHeight - displayHeight) / 2
+
+                // Scale factors
+                val scaleX = displayWidth / imageWidth
+                val scaleY = displayHeight / imageHeight
+
                 Image(
-                    bitmap = it.asImageBitmap(),
+                    bitmap = bmp.asImageBitmap(),
                     contentDescription = "Processing image",
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Fit
                 )
-            }
 
-            // Position indicator (when running)
-            if (isRunning && bitmap != null) {
-                Text(
-                    text = "($currentX, $currentY)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            RoundedCornerShape(4.dp)
+                // Draw cursor overlay
+                if (isRunning && imageWidth > 0 && imageHeight > 0) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val kernelRadius = kernelSize / 2
+                        val cursorSize = kernelSize * scaleX
+
+                        // Calculate cursor position
+                        val cursorX = offsetX + (currentX * scaleX) - (cursorSize / 2)
+                        val cursorY = offsetY + (currentY * scaleY) - (cursorSize / 2)
+
+                        // Draw progress line (horizontal scanline effect)
+                        val progressY = offsetY + (currentY * scaleY)
+                        drawLine(
+                            color = processedColor,
+                            start = Offset(offsetX, progressY),
+                            end = Offset(offsetX + displayWidth, progressY),
+                            strokeWidth = 2f
                         )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+
+                        // Draw kernel cursor rectangle
+                        drawRect(
+                            color = primaryColor,
+                            topLeft = Offset(cursorX, cursorY),
+                            size = Size(cursorSize, cursorSize),
+                            style = Stroke(width = 3f)
+                        )
+
+                        // Draw center pixel highlight
+                        val centerSize = scaleX.coerceAtLeast(4f)
+                        drawRect(
+                            color = primaryColor,
+                            topLeft = Offset(
+                                offsetX + (currentX * scaleX) - centerSize / 2,
+                                offsetY + (currentY * scaleY) - centerSize / 2
+                            ),
+                            size = Size(centerSize, centerSize)
+                        )
+
+                        // Draw processed area overlay (semi-transparent)
+                        if (progress > 0 && progress < 1) {
+                            val processedHeight = currentY * scaleY
+                            drawRect(
+                                color = processedColor.copy(alpha = 0.1f),
+                                topLeft = Offset(offsetX, offsetY),
+                                size = Size(displayWidth, processedHeight)
+                            )
+                        }
+                    }
+                }
+
+                // Position indicator label
+                if (isRunning) {
+                    Text(
+                        text = "($currentX, $currentY)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
     }
@@ -286,21 +385,25 @@ private fun KernelDisplayCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                kernelValues.forEach { row ->
+                kernelValues.forEachIndexed { rowIndex, row ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        row.forEach { value ->
+                        row.forEachIndexed { colIndex, value ->
+                            val isCenter = rowIndex == kernelValues.size / 2 &&
+                                    colIndex == row.size / 2
                             Box(
                                 modifier = Modifier
                                     .size(if (kernelValues.size <= 3) 32.dp else 24.dp)
                                     .background(
-                                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        if (isCenter) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceContainerHighest,
                                         RoundedCornerShape(4.dp)
                                     )
                                     .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        if (isCenter) 2.dp else 1.dp,
+                                        if (isCenter) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                         RoundedCornerShape(4.dp)
                                     ),
                                 contentAlignment = Alignment.Center
@@ -311,7 +414,8 @@ private fun KernelDisplayCard(
                                         fontSize = if (kernelValues.size <= 3) 9.sp else 7.sp,
                                         fontFamily = FontFamily.Monospace
                                     ),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = if (isCenter) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }

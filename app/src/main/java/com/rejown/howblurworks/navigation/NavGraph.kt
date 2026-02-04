@@ -11,6 +11,7 @@ import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelSize
 import com.rejown.howblurworks.presentation.home.HomeScreen
 import com.rejown.howblurworks.presentation.result.ResultScreen
+import com.rejown.howblurworks.presentation.settings.SettingsScreen
 import com.rejown.howblurworks.presentation.visualization.VisualizationScreen
 
 /**
@@ -25,6 +26,7 @@ sealed class Screen(val route: String) {
         }
     }
     data object Result : Screen("result")
+    data object Settings : Screen("settings")
 }
 
 @Composable
@@ -42,6 +44,9 @@ fun NavGraph(
                     navController.navigate(
                         Screen.Visualization.createRoute(imageUri, blurType, kernelSize)
                     )
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
@@ -75,6 +80,12 @@ fun NavGraph(
                 onTryAgain = {
                     navController.popBackStack(Screen.Home.route, inclusive = false)
                 }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
