@@ -926,36 +926,55 @@ private fun InteractiveKernelPreview(preview: KernelPreview) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Description as info chips with fixed height
-        val descriptionBoxHeight = 56.dp
+        // Description boxes with fixed height and 2:3 ratio
+        val descriptionBoxHeight = 52.dp
+        val infoItems = preview.description.split("\n")
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val infoItems = preview.description.split("\n")
-            infoItems.forEach { info ->
-                if (info.isNotBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(descriptionBoxHeight)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceContainerHighest,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = info,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 16.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center
+            // Left box (size info) - 2/5 width
+            if (infoItems.isNotEmpty() && infoItems[0].isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .weight(2f)
+                        .height(descriptionBoxHeight)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            RoundedCornerShape(8.dp)
                         )
-                    }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = infoItems[0],
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            // Right box (type info) - 3/5 width
+            if (infoItems.size > 1 && infoItems[1].isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .weight(3f)
+                        .height(descriptionBoxHeight)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = infoItems[1],
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }

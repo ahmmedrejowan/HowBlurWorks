@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.graphics.createBitmap
 
 data class HomeUiState(
     val selectedImageUri: String? = null,
@@ -131,7 +132,22 @@ class HomeViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val bitmap = withContext(Dispatchers.IO) {
-                    BitmapFactory.decodeResource(context.resources, sampleImage.drawableResId)
+                    // Try loading as bitmap first
+                    var loadedBitmap = BitmapFactory.decodeResource(context.resources, sampleImage.drawableResId)
+
+                    // If null, it might be a vector drawable - convert it to bitmap
+                    if (loadedBitmap == null) {
+                        val drawable = androidx.core.content.ContextCompat.getDrawable(context, sampleImage.drawableResId)
+                        if (drawable != null) {
+                            val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 400
+                            val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 300
+                            loadedBitmap = createBitmap(width, height)
+                            val canvas = android.graphics.Canvas(loadedBitmap)
+                            drawable.setBounds(0, 0, canvas.width, canvas.height)
+                            drawable.draw(canvas)
+                        }
+                    }
+                    loadedBitmap
                 }
                 if (bitmap != null) {
                     val (scaledBitmap, scale) = BitmapUtils.scaleToMaxDimension(bitmap, 400)
