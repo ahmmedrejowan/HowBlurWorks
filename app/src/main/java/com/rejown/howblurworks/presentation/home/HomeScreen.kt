@@ -8,6 +8,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -31,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.BlurOn
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -47,8 +50,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -205,19 +205,47 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Hero Section
-            HeroSection()
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Learn The Theory Section
+            // ═══════════════════════════════════════════════════════════
+            // LEARN SECTION
+            // ═══════════════════════════════════════════════════════════
             if (uiState.theoryItems.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
                 LearnTheorySection(
                     items = uiState.theoryItems,
                     onItemClick = { viewModel.onTheoryItemClick(it) }
                 )
-                Spacer(modifier = Modifier.height(24.dp))
             }
+
+            // ═══════════════════════════════════════════════════════════
+            // VISUALIZATION SECTION
+            // ═══════════════════════════════════════════════════════════
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(20.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(2.dp)
+                        )
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Create Visualization",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Quick Start Section
             QuickStartSection(
@@ -235,74 +263,94 @@ fun HomeScreen(
                 onClearImage = { viewModel.clearImage() }
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
             // Sample Images Section
             if (uiState.sampleImages.isNotEmpty() && uiState.selectedBitmap == null) {
+                Spacer(modifier = Modifier.height(16.dp))
                 SampleImagesSection(
                     samples = uiState.sampleImages,
                     onSampleClick = { viewModel.onSampleImageSelected(context, it) }
                 )
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Blur Settings
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                SectionTitle("Blur Type")
-                Spacer(modifier = Modifier.height(8.dp))
-                BlurTypeSelector(
-                    selectedType = uiState.selectedBlurType,
-                    onTypeSelected = { viewModel.onBlurTypeSelected(it) }
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Blur Settings Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Interactive Kernel Preview
-                uiState.kernelPreview?.let { preview ->
-                    InteractiveKernelPreview(preview = preview)
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-
-                // Kernel Size Selection
-                SectionTitle("Kernel Size")
-                Spacer(modifier = Modifier.height(8.dp))
-                KernelSizeSelector(
-                    selectedSize = uiState.selectedKernelSize,
-                    onSizeSelected = { viewModel.onKernelSizeSelected(it) }
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Start Button
-                Button(
-                    onClick = {
-                        uiState.selectedImageUri?.let { uri ->
-                            onStartVisualization(uri, uiState.selectedBlurType, uiState.selectedKernelSize)
-                        }
-                    },
-                    enabled = uiState.selectedImageUri != null && !uiState.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Blur Type
                     Text(
-                        text = "Start Visualization",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "Blur Algorithm",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    BlurTypeSelector(
+                        selectedType = uiState.selectedBlurType,
+                        onTypeSelected = { viewModel.onBlurTypeSelected(it) }
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Kernel Size Selection
+                    Text(
+                        text = "Kernel Size",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    KernelSizeSelector(
+                        selectedSize = uiState.selectedKernelSize,
+                        onSizeSelected = { viewModel.onKernelSizeSelected(it) }
+                    )
+
+                    // Interactive Kernel Preview
+                    uiState.kernelPreview?.let { preview ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        InteractiveKernelPreview(preview = preview)
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Start Button
+            Button(
+                onClick = {
+                    uiState.selectedImageUri?.let { uri ->
+                        onStartVisualization(uri, uiState.selectedBlurType, uiState.selectedKernelSize)
+                    }
+                },
+                enabled = uiState.selectedImageUri != null && !uiState.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Start Visualization",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // Theory Detail Bottom Sheet
@@ -338,48 +386,6 @@ fun HomeScreen(
                             )
                         }
                     }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeroSection() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
-                    )
-                )
-                .padding(24.dp)
-        ) {
-            Column {
-                Text(
-                    text = "Visualize How Blur Works",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Watch pixel-by-pixel convolution in real-time. Select an image and see the math behind image blurring.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
             }
         }
@@ -822,84 +828,116 @@ private fun SampleImageCard(
 
 @Composable
 private fun InteractiveKernelPreview(preview: KernelPreview) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Divider line
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Kernel Preview",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
 
-            // Kernel matrix display
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                contentAlignment = Alignment.Center
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Kernel matrix display with improved styling
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    preview.matrix.forEachIndexed { rowIndex, row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            row.forEachIndexed { colIndex, value ->
-                                val isCenter = rowIndex == preview.matrix.size / 2 &&
-                                        colIndex == row.size / 2
-                                val valueFloat = value.toFloatOrNull() ?: 0f
-                                val isActive = valueFloat > 0.001f
+                preview.matrix.forEachIndexed { rowIndex, row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        row.forEachIndexed { colIndex, value ->
+                            val isCenter = rowIndex == preview.matrix.size / 2 &&
+                                    colIndex == row.size / 2
+                            val valueFloat = value.toFloatOrNull() ?: 0f
+                            val isActive = valueFloat > 0.001f
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(if (preview.size == KernelSize.LARGE) 36.dp else 44.dp)
-                                        .background(
-                                            when {
-                                                isCenter -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                                isActive -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                                else -> MaterialTheme.colorScheme.surfaceContainerHighest
-                                            },
-                                            RoundedCornerShape(6.dp)
-                                        )
-                                        .border(
-                                            width = if (isCenter) 2.dp else 1.dp,
-                                            color = if (isCenter) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                            shape = RoundedCornerShape(6.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = if (valueFloat < 0.01f && valueFloat > 0f) "<.01" else value,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = if (preview.size == KernelSize.LARGE) 8.sp else 10.sp,
-                                        color = if (isActive) MaterialTheme.colorScheme.onSurface
-                                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                    )
-                                }
+                            // Calculate intensity for gradient effect
+                            val maxValue = preview.matrix.flatten().mapNotNull { it.toFloatOrNull() }.maxOrNull() ?: 1f
+                            val intensity = if (maxValue > 0) (valueFloat / maxValue).coerceIn(0f, 1f) else 0f
+
+                            val cellSize = when (preview.size) {
+                                KernelSize.SMALL -> 52.dp
+                                KernelSize.MEDIUM -> 38.dp
+                                KernelSize.LARGE -> 30.dp
                             }
-                        }
-                        if (rowIndex < preview.matrix.size - 1) {
-                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(cellSize)
+                                    .background(
+                                        when {
+                                            isCenter -> MaterialTheme.colorScheme.primary
+                                            isActive -> MaterialTheme.colorScheme.primaryContainer.copy(
+                                                alpha = 0.4f + (intensity * 0.6f)
+                                            )
+                                            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        },
+                                        RoundedCornerShape(4.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val displayValue = when {
+                                    valueFloat == 0f -> "0"
+                                    valueFloat < 0.01f -> ".00"
+                                    else -> String.format("%.2f", valueFloat).removePrefix("0")
+                                }
+                                Text(
+                                    text = displayValue,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = when (preview.size) {
+                                        KernelSize.SMALL -> 11.sp
+                                        KernelSize.MEDIUM -> 9.sp
+                                        KernelSize.LARGE -> 7.sp
+                                    },
+                                    fontWeight = if (isCenter) FontWeight.Bold else FontWeight.Normal,
+                                    color = when {
+                                        isCenter -> MaterialTheme.colorScheme.onPrimary
+                                        isActive -> MaterialTheme.colorScheme.onPrimaryContainer
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = preview.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 18.sp
-            )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Description as info chips
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val infoItems = preview.description.split("\n")
+            infoItems.forEach { info ->
+                if (info.isNotBlank()) {
+                    Text(
+                        text = info,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        lineHeight = 16.sp
+                    )
+                }
+            }
         }
     }
 }
@@ -1013,26 +1051,74 @@ private fun BlurTypeSelector(
     selectedType: BlurType,
     onTypeSelected: (BlurType) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val blurTypeInfo = mapOf(
+        BlurType.GAUSSIAN to Triple(Icons.Default.BlurOn, "Gaussian", "Smooth, natural"),
+        BlurType.BOX to Triple(Icons.Default.GridOn, "Box", "Fast, uniform"),
+        BlurType.MOTION_HORIZONTAL to Triple(Icons.AutoMirrored.Filled.TrendingFlat, "Motion H", "Horizontal sweep"),
+        BlurType.MOTION_VERTICAL to Triple(Icons.Default.Height, "Motion V", "Vertical sweep")
+    )
+
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp)
     ) {
-        BlurType.entries.forEach { type ->
-            FilterChip(
-                selected = type == selectedType,
-                onClick = { onTypeSelected(type) },
-                label = {
-                    Text(
-                        text = type.displayName,
-                        style = MaterialTheme.typography.labelLarge
+        items(BlurType.entries.toList()) { type ->
+            val isSelected = type == selectedType
+            val (icon, name, desc) = blurTypeInfo[type] ?: Triple(Icons.Default.BlurOn, type.displayName, "")
+
+            Card(
+                modifier = Modifier
+                    .width(100.dp)
+                    .clickable { onTypeSelected(type) },
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isSelected)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                border = if (isSelected) BorderStroke(
+                    2.dp,
+                    MaterialTheme.colorScheme.primary
+                ) else null
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = name,
+                        modifier = Modifier.size(28.dp),
+                        tint = if (isSelected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                },
-                modifier = Modifier.weight(1f),
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 10.sp,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+            }
         }
     }
 }
