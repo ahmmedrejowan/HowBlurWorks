@@ -36,28 +36,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: SettingsViewModel = viewModel()
 ) {
-    // Settings state - In a real app, these would be persisted with DataStore
-    var selectedTheme by remember { mutableIntStateOf(0) } // 0 = Auto, 1 = Light, 2 = Dark
-    var selectedDuration by remember { mutableIntStateOf(1) } // 0 = 15s, 1 = 30s, 2 = 60s
-    var showKernelOverlay by remember { mutableStateOf(true) }
-    var showPixelInfo by remember { mutableStateOf(true) }
-    var showScanline by remember { mutableStateOf(true) }
+    val settings by viewModel.settings.collectAsState()
 
     Scaffold(
         topBar = {
@@ -115,22 +109,22 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         SegmentedButton(
-                            selected = selectedTheme == 0,
-                            onClick = { selectedTheme = 0 },
+                            selected = settings.themeMode == 0,
+                            onClick = { viewModel.updateThemeMode(0) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
                         ) {
                             Text("Auto")
                         }
                         SegmentedButton(
-                            selected = selectedTheme == 1,
-                            onClick = { selectedTheme = 1 },
+                            selected = settings.themeMode == 1,
+                            onClick = { viewModel.updateThemeMode(1) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
                         ) {
                             Text("Light")
                         }
                         SegmentedButton(
-                            selected = selectedTheme == 2,
-                            onClick = { selectedTheme = 2 },
+                            selected = settings.themeMode == 2,
+                            onClick = { viewModel.updateThemeMode(2) },
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
                         ) {
                             Text("Dark")
@@ -172,22 +166,22 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         SegmentedButton(
-                            selected = selectedDuration == 0,
-                            onClick = { selectedDuration = 0 },
+                            selected = settings.defaultDuration == 0,
+                            onClick = { viewModel.updateDefaultDuration(0) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
                         ) {
                             Text("15s")
                         }
                         SegmentedButton(
-                            selected = selectedDuration == 1,
-                            onClick = { selectedDuration = 1 },
+                            selected = settings.defaultDuration == 1,
+                            onClick = { viewModel.updateDefaultDuration(1) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
                         ) {
                             Text("30s")
                         }
                         SegmentedButton(
-                            selected = selectedDuration == 2,
-                            onClick = { selectedDuration = 2 },
+                            selected = settings.defaultDuration == 2,
+                            onClick = { viewModel.updateDefaultDuration(2) },
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
                         ) {
                             Text("60s")
@@ -217,22 +211,22 @@ fun SettingsScreen(
                     SettingsSwitchItem(
                         title = "Kernel Overlay",
                         subtitle = "Show kernel cursor on image",
-                        checked = showKernelOverlay,
-                        onCheckedChange = { showKernelOverlay = it }
+                        checked = settings.showKernelOverlay,
+                        onCheckedChange = { viewModel.updateShowKernelOverlay(it) }
                     )
 
                     SettingsSwitchItem(
                         title = "Pixel Info",
                         subtitle = "Show input/output color preview",
-                        checked = showPixelInfo,
-                        onCheckedChange = { showPixelInfo = it }
+                        checked = settings.showPixelInfo,
+                        onCheckedChange = { viewModel.updateShowPixelInfo(it) }
                     )
 
                     SettingsSwitchItem(
                         title = "Scanline Effect",
                         subtitle = "Show horizontal progress line",
-                        checked = showScanline,
-                        onCheckedChange = { showScanline = it }
+                        checked = settings.showScanline,
+                        onCheckedChange = { viewModel.updateShowScanline(it) }
                     )
                 }
             }

@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,6 +68,7 @@ import com.rejown.howblurworks.data.ResultHolder
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelSize
 import com.rejown.howblurworks.domain.model.PixelCalculation
+import com.rejown.howblurworks.domain.model.ProcessSpeed
 import com.rejown.howblurworks.util.BitmapUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,7 +185,18 @@ fun VisualizationScreen(
                     elapsedTimeMs = uiState.elapsedTimeMs
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Speed Selector
+                if (!uiState.isComplete) {
+                    SpeedSelector(
+                        selectedSpeed = uiState.speed,
+                        onSpeedSelected = { viewModel.onSpeedChanged(it) },
+                        enabled = !uiState.isRunning
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Controls
                 ControlsSection(
@@ -659,6 +673,42 @@ private fun ControlsSection(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Start")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpeedSelector(
+    selectedSpeed: ProcessSpeed,
+    onSpeedSelected: (ProcessSpeed) -> Unit,
+    enabled: Boolean
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "SPEED",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ProcessSpeed.entries.forEach { speed ->
+                FilterChip(
+                    selected = speed == selectedSpeed,
+                    onClick = { onSpeedSelected(speed) },
+                    label = { Text(speed.displayName) },
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
             }
         }
     }
