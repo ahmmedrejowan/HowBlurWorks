@@ -180,7 +180,7 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "BlurVision",
+                        text = "How Blur Works",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )

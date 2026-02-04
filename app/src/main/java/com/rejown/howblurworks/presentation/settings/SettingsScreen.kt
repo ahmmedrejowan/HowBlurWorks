@@ -250,7 +250,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     AboutItem(
-                        title = "BlurVision",
+                        title = "How Blur Works",
                         value = "Version 1.0.0"
                     )
 

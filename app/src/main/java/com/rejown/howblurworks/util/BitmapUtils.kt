@@ -138,13 +138,13 @@ object BitmapUtils {
     fun saveBitmapToGallery(
         context: Context,
         bitmap: Bitmap,
-        displayName: String = "BlurVision_${System.currentTimeMillis()}"
+        displayName: String = "HBW_${System.currentTimeMillis()}"
     ): Uri? {
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$displayName.png")
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BlurVision")
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/HBW")
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
         }
