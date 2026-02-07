@@ -336,6 +336,20 @@ fun SettingsScreen(
                             context.startActivity(intent)
                         }
                     )
+
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                    ClickableItem(
+                        title = "Source Code",
+                        description = "View project on GitHub",
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                "https://github.com/ahmmedrejowan/HowBlurWorks".toUri()
+                            )
+                            context.startActivity(intent)
+                        }
+                    )
                 }
             }
 
