@@ -46,7 +46,11 @@ data class VisualizationUiState(
     val blurType: BlurType = BlurType.GAUSSIAN,
     val kernelSize: KernelSize = KernelSize.SIZE_3,
     val intensity: BlurIntensity = BlurIntensity.MEDIUM,
-    val error: String? = null
+    val error: String? = null,
+    // Pause/Resume state
+    val pausedAtX: Int = 0,
+    val pausedAtY: Int = 0,
+    val pausedBitmap: Bitmap? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -79,6 +83,9 @@ data class VisualizationUiState(
         if (kernelSize != other.kernelSize) return false
         if (intensity != other.intensity) return false
         if (error != other.error) return false
+        if (pausedAtX != other.pausedAtX) return false
+        if (pausedAtY != other.pausedAtY) return false
+        if (pausedBitmap != other.pausedBitmap) return false
 
         return true
     }
@@ -106,6 +113,9 @@ data class VisualizationUiState(
         result = 31 * result + kernelSize.hashCode()
         result = 31 * result + intensity.hashCode()
         result = 31 * result + (error?.hashCode() ?: 0)
+        result = 31 * result + pausedAtX
+        result = 31 * result + pausedAtY
+        result = 31 * result + (pausedBitmap?.hashCode() ?: 0)
         return result
     }
 }
@@ -234,18 +244,57 @@ class VisualizationViewModel : ViewModel() {
 
     fun pauseProcessing() {
         processingJob?.cancel()
+        val state = _uiState.value
         _uiState.update {
             it.copy(
                 isRunning = false,
-                isPaused = true
+                isPaused = true,
+                // Store pause position for resume
+                pausedAtX = state.currentX,
+                pausedAtY = state.currentY,
+                pausedBitmap = state.displayBitmap
             )
         }
     }
 
     fun resumeProcessing() {
-        // For simplicity, restart from beginning
-        // A more sophisticated implementation would track progress
-        startProcessing()
+        val state = _uiState.value
+        val bitmap = state.originalBitmap ?: return
+        val autoSpeedConfig = state.autoSpeedConfig ?: return
+        val pausedX = state.pausedAtX
+        val pausedY = state.pausedAtY
+        val pausedBitmap = state.pausedBitmap
+
+        // Calculate next position (move to next pixel)
+        val width = bitmap.width
+        var resumeX = pausedX + 1
+        var resumeY = pausedY
+        if (resumeX >= width) {
+            resumeX = 0
+            resumeY += 1
+        }
+
+        _uiState.update {
+            it.copy(
+                isRunning = true,
+                isPaused = false
+            )
+        }
+
+        processingJob = viewModelScope.launch {
+            val kernelConfig = KernelConfig(state.blurType, state.kernelSize, state.intensity, state.intensity.sigma)
+
+            blurProcessor.processWithVisualization(
+                bitmap = bitmap,
+                config = kernelConfig,
+                speedConfig = autoSpeedConfig,
+                startFromX = resumeX,
+                startFromY = resumeY,
+                currentOutputBitmap = pausedBitmap
+            ).collect { step ->
+                onStepReceived(step)
+            }
+        }
     }
 
     fun stopProcessing() {

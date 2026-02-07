@@ -189,16 +189,15 @@ fun VisualizationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Speed Selector
-                if (!uiState.isComplete) {
+                // Speed Selector - hide when running
+                if (!uiState.isComplete && !uiState.isRunning) {
                     SpeedSelector(
                         selectedSpeed = uiState.speed,
                         onSpeedSelected = { viewModel.onSpeedChanged(it) },
-                        enabled = !uiState.isRunning
+                        enabled = true
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Controls
                 ControlsSection(

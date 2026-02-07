@@ -61,7 +61,10 @@ class BlurProcessor {
     fun processWithVisualization(
         bitmap: Bitmap,
         config: KernelConfig,
-        speedConfig: AutoSpeedConfig
+        speedConfig: AutoSpeedConfig,
+        startFromX: Int = 0,
+        startFromY: Int = 0,
+        currentOutputBitmap: Bitmap? = null
     ): Flow<BlurStep> = flow {
         val kernel = KernelGenerator.generate(config)
         val width = bitmap.width
@@ -69,20 +72,27 @@ class BlurProcessor {
         val radius = config.size.size / 2
         val totalPixels = width * height
 
-        // Create mutable output bitmap
-        val output = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        // Use existing output bitmap if resuming, otherwise create new one
+        val output = currentOutputBitmap?.copy(Bitmap.Config.ARGB_8888, true)
+            ?: bitmap.copy(Bitmap.Config.ARGB_8888, true)
 
         // Get all pixels for faster access
         val inputPixels = IntArray(width * height)
         val outputPixels = IntArray(width * height)
         bitmap.getPixels(inputPixels, 0, width, 0, 0, width, height)
-        bitmap.getPixels(outputPixels, 0, width, 0, 0, width, height)
+        output.getPixels(outputPixels, 0, width, 0, 0, width, height)
 
-        var processedCount = 0
-        var lastEmitCount = 0
+        // Calculate starting position
+        val startPixelIndex = startFromY * width + startFromX
+        var processedCount = startPixelIndex
+        var lastEmitCount = startPixelIndex
 
         for (y in 0 until height) {
             for (x in 0 until width) {
+                // Skip already processed pixels when resuming
+                val currentIndex = y * width + x
+                if (currentIndex < startPixelIndex) continue
+
                 if (!coroutineContext.isActive) return@flow
 
                 // Perform convolution
