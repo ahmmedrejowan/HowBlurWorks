@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
@@ -221,7 +221,7 @@ fun ResultScreen(
                     shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.CompareArrows,
+                            imageVector = Icons.AutoMirrored.Filled.CompareArrows,
                             contentDescription = null,
                             modifier = Modifier.padding(end = 4.dp)
                         )
@@ -310,13 +310,17 @@ fun ResultScreen(
                     blurredBitmap?.let { bitmap ->
                         scope.launch {
                             try {
-                                // Save to cache for sharing
+                                // Save to cache for sharing - ensure bitmap is mutable and properly formatted
                                 val file = withContext(Dispatchers.IO) {
                                     val cacheDir = File(context.cacheDir, "share")
                                     cacheDir.mkdirs()
-                                    val shareFile = File(cacheDir, "blurred_image.png")
+                                    val shareFile = File(cacheDir, "blurred_image_${System.currentTimeMillis()}.png")
+
+                                    // Create a copy to ensure it's in ARGB_8888 format
+                                    val shareBitmap = bitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+
                                     shareFile.outputStream().use { out ->
-                                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                                        shareBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
                                     }
                                     shareFile
                                 }
@@ -337,7 +341,8 @@ fun ResultScreen(
                                     Intent.createChooser(shareIntent, "Share blurred image")
                                 )
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Failed to share", Toast.LENGTH_SHORT).show()
+                                e.printStackTrace()
+                                Toast.makeText(context, "Failed to share: ${e.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

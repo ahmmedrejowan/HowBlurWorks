@@ -1,7 +1,7 @@
 package com.rejown.howblurworks.presentation.components
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -28,11 +28,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -50,30 +55,50 @@ fun ImageComparisonSlider(
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
     ) {
         val maxWidthPx = constraints.maxWidth.toFloat()
+        val maxHeightPx = constraints.maxHeight.toFloat()
 
         if (originalBitmap != null && blurredBitmap != null) {
-            // Blurred image (background - full width)
-            Image(
-                bitmap = blurredBitmap.asImageBitmap(),
-                contentDescription = "Blurred image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
-            )
+            // Calculate image dimensions to fit in container (ContentScale.Fit)
+            val imageAspect = originalBitmap.width.toFloat() / originalBitmap.height.toFloat()
+            val containerAspect = maxWidthPx / maxHeightPx
 
-            // Original image (clipped to slider position)
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(with(LocalDensity.current) { (maxWidthPx * sliderPosition).toDp() })
-                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
-            ) {
-                Image(
-                    bitmap = originalBitmap.asImageBitmap(),
-                    contentDescription = "Original image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.CenterStart
+            val (drawWidth, drawHeight) = if (imageAspect > containerAspect) {
+                maxWidthPx to (maxWidthPx / imageAspect)
+            } else {
+                (maxHeightPx * imageAspect) to maxHeightPx
+            }
+
+            val offsetX = (maxWidthPx - drawWidth) / 2
+            val offsetY = (maxHeightPx - drawHeight) / 2
+
+            // Draw both images using Canvas with proper clipping
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val originalImageBitmap = originalBitmap.asImageBitmap()
+                val blurredImageBitmap = blurredBitmap.asImageBitmap()
+
+                val dstOffset = IntOffset(offsetX.toInt(), offsetY.toInt())
+                val dstSize = IntSize(drawWidth.toInt(), drawHeight.toInt())
+
+                // Draw blurred image (full)
+                drawImage(
+                    image = blurredImageBitmap,
+                    dstOffset = dstOffset,
+                    dstSize = dstSize
                 )
+
+                // Clip and draw original image (left side based on slider)
+                val clipX = offsetX + (drawWidth * sliderPosition)
+                val clipPath = Path().apply {
+                    addRect(Rect(0f, 0f, clipX, maxHeightPx))
+                }
+
+                clipPath(clipPath) {
+                    drawImage(
+                        image = originalImageBitmap,
+                        dstOffset = dstOffset,
+                        dstSize = dstSize
+                    )
+                }
             }
 
             // Slider divider line
@@ -83,7 +108,7 @@ fun ImageComparisonSlider(
                     .width(3.dp)
                     .offset {
                         IntOffset(
-                            x = (maxWidthPx * sliderPosition - 1.5f).roundToInt(),
+                            x = (offsetX + drawWidth * sliderPosition - 1.5f).roundToInt(),
                             y = 0
                         )
                     }
@@ -96,15 +121,15 @@ fun ImageComparisonSlider(
                     .size(40.dp)
                     .offset {
                         IntOffset(
-                            x = (maxWidthPx * sliderPosition - 20.dp.toPx()).roundToInt(),
-                            y = (constraints.maxHeight / 2 - 20.dp.toPx()).roundToInt()
+                            x = (offsetX + drawWidth * sliderPosition - 20.dp.toPx()).roundToInt(),
+                            y = (maxHeightPx / 2 - 20.dp.toPx()).roundToInt()
                         )
                     }
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .pointerInput(Unit) {
                         detectHorizontalDragGestures { _, dragAmount ->
-                            val newPosition = sliderPosition + (dragAmount / maxWidthPx)
+                            val newPosition = sliderPosition + (dragAmount / drawWidth)
                             sliderPosition = newPosition.coerceIn(0.05f, 0.95f)
                         }
                     },
