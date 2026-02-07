@@ -301,39 +301,31 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Kernel Size and Intensity Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Kernel Size Selection
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Kernel Size",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            KernelSizeSelector(
-                                selectedSize = uiState.selectedKernelSize,
-                                onSizeSelected = { viewModel.onKernelSizeSelected(it) }
-                            )
-                        }
+                    // Kernel Size Selection
+                    Text(
+                        text = "Kernel Size",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    KernelSizeSelector(
+                        selectedSize = uiState.selectedKernelSize,
+                        onSizeSelected = { viewModel.onKernelSizeSelected(it) }
+                    )
 
-                        // Intensity Selection
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Intensity",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            IntensitySelector(
-                                selectedIntensity = uiState.selectedIntensity,
-                                onIntensitySelected = { viewModel.onIntensitySelected(it) }
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Intensity Selection
+                    Text(
+                        text = "Intensity",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    IntensitySelector(
+                        selectedIntensity = uiState.selectedIntensity,
+                        onIntensitySelected = { viewModel.onIntensitySelected(it) }
+                    )
 
                     // Interactive Kernel Preview
                     uiState.kernelPreview?.let { preview ->
