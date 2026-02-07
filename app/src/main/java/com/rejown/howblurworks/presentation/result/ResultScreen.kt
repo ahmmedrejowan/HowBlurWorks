@@ -103,12 +103,18 @@ fun ResultScreen(
                     }
                 },
                 actions = {
-                    Text(
-                        text = "Done",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(end = 16.dp)
-                    )
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            ResultHolder.clear()
+                            onTryAgain()
+                        }
+                    ) {
+                        Text(
+                            text = "Done",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
