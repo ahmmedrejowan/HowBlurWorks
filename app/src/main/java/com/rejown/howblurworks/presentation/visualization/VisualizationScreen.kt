@@ -152,6 +152,7 @@ fun VisualizationScreen(
                     currentY = uiState.currentY,
                     kernelSize = uiState.kernelSize.size,
                     isRunning = uiState.isRunning,
+                    isPaused = uiState.isPaused,
                     progress = uiState.progress
                 )
 
@@ -251,10 +252,16 @@ private fun ImageDisplayCard(
     currentY: Int,
     kernelSize: Int,
     isRunning: Boolean,
+    isPaused: Boolean,
     progress: Float
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val pausedColor = MaterialTheme.colorScheme.tertiary
     val processedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+
+    // Show overlay when running OR paused (but has progress)
+    val showOverlay = (isRunning || isPaused) && progress > 0 && imageWidth > 0 && imageHeight > 0
+    val overlayColor = if (isPaused) pausedColor else primaryColor
 
     Card(
         modifier = Modifier
@@ -298,10 +305,9 @@ private fun ImageDisplayCard(
                     contentScale = ContentScale.Fit
                 )
 
-                // Draw cursor overlay
-                if (isRunning && imageWidth > 0 && imageHeight > 0) {
+                // Draw cursor overlay when running or paused
+                if (showOverlay) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val kernelRadius = kernelSize / 2
                         val cursorSize = kernelSize * scaleX
 
                         // Calculate cursor position
@@ -319,7 +325,7 @@ private fun ImageDisplayCard(
 
                         // Draw kernel cursor rectangle
                         drawRect(
-                            color = primaryColor,
+                            color = overlayColor,
                             topLeft = Offset(cursorX, cursorY),
                             size = Size(cursorSize, cursorSize),
                             style = Stroke(width = 3f)
@@ -328,7 +334,7 @@ private fun ImageDisplayCard(
                         // Draw center pixel highlight
                         val centerSize = scaleX.coerceAtLeast(4f)
                         drawRect(
-                            color = primaryColor,
+                            color = overlayColor,
                             topLeft = Offset(
                                 offsetX + (currentX * scaleX) - centerSize / 2,
                                 offsetY + (currentY * scaleY) - centerSize / 2
@@ -348,10 +354,10 @@ private fun ImageDisplayCard(
                     }
                 }
 
-                // Position indicator label
-                if (isRunning) {
+                // Position indicator label - show when running or paused
+                if (showOverlay) {
                     Text(
-                        text = "($currentX, $currentY)",
+                        text = "($currentX, $currentY)" + if (isPaused) " ⏸" else "",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
