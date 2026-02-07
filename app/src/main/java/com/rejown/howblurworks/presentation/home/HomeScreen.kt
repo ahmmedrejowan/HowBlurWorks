@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -112,13 +111,14 @@ fun HomeScreen(
     val activity = context as? Activity
 
     var showImageSourceSheet by remember { mutableStateOf(false) }
-    var showExitDialog by remember { mutableStateOf(false) }
+    var showExitSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+    val exitSheetState = rememberModalBottomSheetState()
     val theorySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Handle back button press
     BackHandler {
-        showExitDialog = true
+        showExitSheet = true
     }
 
     // Temp file for camera capture
@@ -423,49 +423,89 @@ fun HomeScreen(
             }
         }
 
-        // Exit Confirmation Dialog
-        if (showExitDialog) {
-            AlertDialog(
-                onDismissRequest = { showExitDialog = false },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.BlurOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                title = {
-                    Text(
-                        text = "Exit App?",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = "Are you sure you want to exit How Blur Works?",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showExitDialog = false
-                            activity?.finish()
-                        }
-                    ) {
-                        Text("Exit")
-                    }
-                },
-                dismissButton = {
-                    OutlinedButton(
-                        onClick = { showExitDialog = false }
-                    ) {
-                        Text("Cancel")
-                    }
-                }
-            )
+        // Exit Confirmation Bottom Sheet
+        if (showExitSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showExitSheet = false },
+                sheetState = exitSheetState
+            ) {
+                ExitBottomSheet(
+                    onExit = {
+                        showExitSheet = false
+                        activity?.finish()
+                    },
+                    onCancel = { showExitSheet = false }
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ExitBottomSheet(
+    onExit: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // App Logo
+        Image(
+            painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+            contentDescription = "App Logo",
+            modifier = Modifier.size(80.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Title
+        Text(
+            text = "Exit App?",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Message
+        Text(
+            text = "Are you sure you want to exit How Blur Works?",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Cancel")
+            }
+
+            Button(
+                onClick = onExit,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Exit")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
