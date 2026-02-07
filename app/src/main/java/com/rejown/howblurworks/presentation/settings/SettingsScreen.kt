@@ -19,7 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -306,7 +309,7 @@ fun SettingsScreen(
 
                     ClickableItem(
                         title = "App License",
-                        description = "Apache License 2.0",
+                        description = "GNU General Public License v3.0",
                         onClick = { showAppLicenseSheet = true }
                     )
 
@@ -587,15 +590,7 @@ private fun CreatorContent() {
             text = "Senior Android Developer",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-        )
-
-        Text(
-            text = "How Blur Works was created as an educational tool to help developers and students understand image processing concepts like convolution and blur algorithms through interactive visualization.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
         )
 
         Card(
@@ -606,7 +601,7 @@ private fun CreatorContent() {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 CreatorLinkItem(
-                    icon = "🌐",
+                    icon = Icons.Default.Language,
                     label = "Website",
                     value = "rejowan.com",
                     onClick = {
@@ -621,7 +616,7 @@ private fun CreatorContent() {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 CreatorLinkItem(
-                    icon = "📧",
+                    icon = Icons.Default.Email,
                     label = "Email",
                     value = "kmrejowan@gmail.com",
                     onClick = {
@@ -635,7 +630,7 @@ private fun CreatorContent() {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 CreatorLinkItem(
-                    icon = "💼",
+                    icon = Icons.Default.Code,
                     label = "GitHub",
                     value = "github.com/ahmmedrejowan",
                     onClick = {
@@ -650,7 +645,7 @@ private fun CreatorContent() {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 CreatorLinkItem(
-                    icon = "🔗",
+                    icon = Icons.Default.Link,
                     label = "LinkedIn",
                     value = "linkedin.com/in/ahmmedrejowan",
                     onClick = {
@@ -668,7 +663,7 @@ private fun CreatorContent() {
 
 @Composable
 private fun CreatorLinkItem(
-    icon: String,
+    icon: ImageVector,
     label: String,
     value: String,
     onClick: () -> Unit
@@ -680,11 +675,15 @@ private fun CreatorLinkItem(
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(end = 16.dp)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier
+                .size(24.dp)
+                .padding(end = 0.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
@@ -712,7 +711,7 @@ private fun AppLicenseContent() {
             .padding(bottom = 32.dp)
     ) {
         Text(
-            text = "Apache License 2.0",
+            text = "GNU General Public License v3.0",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -723,13 +722,11 @@ private fun AppLicenseContent() {
 How Blur Works - Educational Blur Algorithm Visualizer
 Copyright (C) 2025 K M Rejowan Ahmmed
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at:
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-http://www.apache.org/licenses/LICENSE-2.0
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
+You should have received a copy of the GNU General Public License along with this program. If not, see the link below.
             """.trimIndent(),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -745,17 +742,17 @@ See the License for the specific language governing permissions and limitations 
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Key Permissions",
+                    text = "Key Terms",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                LicenseTermItem("✓ Commercial use")
-                LicenseTermItem("✓ Modification")
-                LicenseTermItem("✓ Distribution")
-                LicenseTermItem("✓ Patent use")
-                LicenseTermItem("✓ Private use")
+                LicenseTermItem("✓ Freedom to use the software for any purpose")
+                LicenseTermItem("✓ Freedom to study and modify the source code")
+                LicenseTermItem("✓ Freedom to distribute copies")
+                LicenseTermItem("✓ Freedom to distribute modified versions")
+                LicenseTermItem("✓ Derivative works must be open source under GPL v3.0")
             }
         }
 
@@ -772,14 +769,14 @@ See the License for the specific language governing permissions and limitations 
             onClick = {
                 val intent = Intent(
                     Intent.ACTION_VIEW,
-                    "https://www.apache.org/licenses/LICENSE-2.0".toUri()
+                    "https://www.gnu.org/licenses/gpl-3.0.en.html".toUri()
                 )
                 context.startActivity(intent)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "View Full Apache License 2.0",
+                text = "View Full GPL v3.0 License",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )
