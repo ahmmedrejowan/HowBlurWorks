@@ -16,9 +16,20 @@ enum class BlurType(val displayName: String) {
  * Available kernel sizes
  */
 enum class KernelSize(val size: Int, val displayName: String) {
-    SMALL(3, "3×3"),
-    MEDIUM(5, "5×5"),
-    LARGE(7, "7×7")
+    SIZE_3(3, "3×3"),
+    SIZE_5(5, "5×5"),
+    SIZE_7(7, "7×7"),
+    SIZE_9(9, "9×9"),
+    SIZE_11(11, "11×11")
+}
+
+/**
+ * Blur intensity presets
+ */
+enum class BlurIntensity(val displayName: String, val sigma: Float, val passes: Int) {
+    LOW("Low", 0.8f, 1),
+    MEDIUM("Medium", 1.5f, 2),
+    HIGH("High", 2.5f, 3)
 }
 
 /**
@@ -46,8 +57,9 @@ data class AutoSpeedConfig(
  */
 data class KernelConfig(
     val type: BlurType = BlurType.GAUSSIAN,
-    val size: KernelSize = KernelSize.SMALL,
-    val sigma: Float = 1.0f
+    val size: KernelSize = KernelSize.SIZE_3,
+    val intensity: BlurIntensity = BlurIntensity.MEDIUM,
+    val sigma: Float = intensity.sigma
 )
 
 /**

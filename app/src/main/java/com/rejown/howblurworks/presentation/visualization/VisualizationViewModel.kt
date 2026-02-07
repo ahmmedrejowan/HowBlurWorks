@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.rejown.howblurworks.domain.engine.BlurProcessor
 import com.rejown.howblurworks.domain.engine.KernelGenerator
 import com.rejown.howblurworks.domain.model.AutoSpeedConfig
+import com.rejown.howblurworks.domain.model.BlurIntensity
 import com.rejown.howblurworks.domain.model.BlurStep
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelConfig
@@ -43,7 +44,8 @@ data class VisualizationUiState(
     val autoSpeedConfig: AutoSpeedConfig? = null,
     val elapsedTimeMs: Long = 0,
     val blurType: BlurType = BlurType.GAUSSIAN,
-    val kernelSize: KernelSize = KernelSize.SMALL,
+    val kernelSize: KernelSize = KernelSize.SIZE_3,
+    val intensity: BlurIntensity = BlurIntensity.MEDIUM,
     val error: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
@@ -75,6 +77,7 @@ data class VisualizationUiState(
         if (elapsedTimeMs != other.elapsedTimeMs) return false
         if (blurType != other.blurType) return false
         if (kernelSize != other.kernelSize) return false
+        if (intensity != other.intensity) return false
         if (error != other.error) return false
 
         return true
@@ -101,6 +104,7 @@ data class VisualizationUiState(
         result = 31 * result + elapsedTimeMs.hashCode()
         result = 31 * result + blurType.hashCode()
         result = 31 * result + kernelSize.hashCode()
+        result = 31 * result + intensity.hashCode()
         result = 31 * result + (error?.hashCode() ?: 0)
         return result
     }
@@ -119,14 +123,16 @@ class VisualizationViewModel : ViewModel() {
         context: Context,
         imageUri: String,
         blurType: BlurType,
-        kernelSize: KernelSize
+        kernelSize: KernelSize,
+        intensity: BlurIntensity
     ) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     isLoading = true,
                     blurType = blurType,
-                    kernelSize = kernelSize
+                    kernelSize = kernelSize,
+                    intensity = intensity
                 )
             }
 
@@ -140,7 +146,7 @@ class VisualizationViewModel : ViewModel() {
                 }
 
                 if (bitmap != null) {
-                    val kernelConfig = KernelConfig(blurType, kernelSize)
+                    val kernelConfig = KernelConfig(blurType, kernelSize, intensity, intensity.sigma)
                     val kernel = KernelGenerator.generate(kernelConfig)
                     val kernelDisplay = KernelGenerator.formatForDisplay(kernel)
 
@@ -198,7 +204,7 @@ class VisualizationViewModel : ViewModel() {
         startTimeMs = System.currentTimeMillis()
 
         processingJob = viewModelScope.launch {
-            val kernelConfig = KernelConfig(state.blurType, state.kernelSize)
+            val kernelConfig = KernelConfig(state.blurType, state.kernelSize, state.intensity, state.intensity.sigma)
 
             blurProcessor.processWithVisualization(bitmap, kernelConfig, autoSpeedConfig)
                 .collect { step ->
@@ -263,7 +269,7 @@ class VisualizationViewModel : ViewModel() {
         viewModelScope.launch {
             val state = _uiState.value
             val bitmap = state.originalBitmap ?: return@launch
-            val kernelConfig = KernelConfig(state.blurType, state.kernelSize)
+            val kernelConfig = KernelConfig(state.blurType, state.kernelSize, state.intensity, state.intensity.sigma)
 
             _uiState.update { it.copy(isLoading = true) }
 

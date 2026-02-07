@@ -15,7 +15,7 @@ object ResultHolder {
     var originalBitmap: Bitmap? = null
     var blurredBitmap: Bitmap? = null
     var blurType: BlurType = BlurType.GAUSSIAN
-    var kernelSize: KernelSize = KernelSize.SMALL
+    var kernelSize: KernelSize = KernelSize.SIZE_3
     var imageWidth: Int = 0
     var imageHeight: Int = 0
     var processedPixels: Int = 0
@@ -46,7 +46,7 @@ object ResultHolder {
         originalBitmap = null
         blurredBitmap = null
         blurType = BlurType.GAUSSIAN
-        kernelSize = KernelSize.SMALL
+        kernelSize = KernelSize.SIZE_3
         imageWidth = 0
         imageHeight = 0
         processedPixels = 0

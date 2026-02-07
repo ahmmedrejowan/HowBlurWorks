@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rejown.howblurworks.data.ResultHolder
+import com.rejown.howblurworks.domain.model.BlurIntensity
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelSize
 import com.rejown.howblurworks.domain.model.PixelCalculation
@@ -77,6 +78,7 @@ fun VisualizationScreen(
     imageUri: String,
     blurType: BlurType,
     kernelSize: KernelSize,
+    intensity: BlurIntensity,
     onNavigateBack: () -> Unit,
     onNavigateToResult: () -> Unit,
     viewModel: VisualizationViewModel = viewModel()
@@ -85,7 +87,7 @@ fun VisualizationScreen(
     val context = LocalContext.current
 
     LaunchedEffect(imageUri) {
-        viewModel.initialize(context, imageUri, blurType, kernelSize)
+        viewModel.initialize(context, imageUri, blurType, kernelSize, intensity)
     }
 
     Scaffold(

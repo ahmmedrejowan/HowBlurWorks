@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rejown.howblurworks.domain.engine.BlurProcessor
 import com.rejown.howblurworks.domain.engine.KernelGenerator
+import com.rejown.howblurworks.domain.model.BlurIntensity
 import com.rejown.howblurworks.domain.model.BlurTheoryItem
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelConfig
@@ -32,7 +33,8 @@ data class HomeUiState(
     val imageHeight: Int = 0,
     val scaleFactor: Float = 1f,
     val selectedBlurType: BlurType = BlurType.GAUSSIAN,
-    val selectedKernelSize: KernelSize = KernelSize.SMALL,
+    val selectedKernelSize: KernelSize = KernelSize.SIZE_3,
+    val selectedIntensity: BlurIntensity = BlurIntensity.MEDIUM,
     val selectedSpeed: ProcessSpeed = ProcessSpeed.AUTO,
     val estimatedDuration: Int = 30,
     val isLoading: Boolean = false,
@@ -186,26 +188,28 @@ class HomeViewModel : ViewModel() {
 
     private fun updateKernelPreview() {
         val state = _uiState.value
-        val config = KernelConfig(type = state.selectedBlurType, size = state.selectedKernelSize)
+        val config = KernelConfig(
+            type = state.selectedBlurType,
+            size = state.selectedKernelSize,
+            intensity = state.selectedIntensity,
+            sigma = state.selectedIntensity.sigma
+        )
         val kernel = KernelGenerator.generate(config)
         val formatted = KernelGenerator.formatForDisplay(kernel)
-        val description = getKernelDescription(state.selectedBlurType, state.selectedKernelSize)
+        val description = getKernelDescription(state.selectedBlurType, state.selectedKernelSize, state.selectedIntensity)
         _uiState.update {
             it.copy(kernelPreview = KernelPreview(formatted, description, state.selectedBlurType, state.selectedKernelSize))
         }
     }
 
-    private fun getKernelDescription(blurType: BlurType, kernelSize: KernelSize): String {
-        val sizeDesc = when (kernelSize) {
-            KernelSize.SMALL -> "3×3 kernel samples 9 pixels"
-            KernelSize.MEDIUM -> "5×5 kernel samples 25 pixels"
-            KernelSize.LARGE -> "7×7 kernel samples 49 pixels"
-        }
+    private fun getKernelDescription(blurType: BlurType, kernelSize: KernelSize, intensity: BlurIntensity): String {
+        val pixels = kernelSize.size * kernelSize.size
+        val sizeDesc = "${kernelSize.displayName} kernel samples $pixels pixels"
         val typeDesc = when (blurType) {
-            BlurType.GAUSSIAN -> "Gaussian weights: center pixels have more influence"
-            BlurType.BOX -> "Box weights: all pixels contribute equally"
-            BlurType.MOTION_HORIZONTAL -> "Motion blur: only horizontal neighbors used"
-            BlurType.MOTION_VERTICAL -> "Motion blur: only vertical neighbors used"
+            BlurType.GAUSSIAN -> "Gaussian blur with ${intensity.displayName.lowercase()} intensity (σ=${intensity.sigma})"
+            BlurType.BOX -> "Box blur: all pixels contribute equally"
+            BlurType.MOTION_HORIZONTAL -> "Horizontal motion blur"
+            BlurType.MOTION_VERTICAL -> "Vertical motion blur"
         }
         return "$sizeDesc\n$typeDesc"
     }
@@ -261,6 +265,11 @@ class HomeViewModel : ViewModel() {
 
     fun onKernelSizeSelected(kernelSize: KernelSize) {
         _uiState.update { it.copy(selectedKernelSize = kernelSize) }
+        updateKernelPreview()
+    }
+
+    fun onIntensitySelected(intensity: BlurIntensity) {
+        _uiState.update { it.copy(selectedIntensity = intensity) }
         updateKernelPreview()
     }
 

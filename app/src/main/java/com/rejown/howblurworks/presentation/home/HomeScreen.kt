@@ -86,6 +86,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rejown.howblurworks.R
 import com.rejown.howblurworks.data.ResultHolder
+import com.rejown.howblurworks.domain.model.BlurIntensity
 import com.rejown.howblurworks.domain.model.BlurTheoryItem
 import com.rejown.howblurworks.domain.model.BlurType
 import com.rejown.howblurworks.domain.model.KernelPreview
@@ -97,7 +98,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onStartVisualization: (imageUri: String, blurType: BlurType, kernelSize: KernelSize) -> Unit,
+    onStartVisualization: (imageUri: String, blurType: BlurType, kernelSize: KernelSize, intensity: BlurIntensity) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -300,17 +301,39 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Kernel Size Selection
-                    Text(
-                        text = "Kernel Size",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    KernelSizeSelector(
-                        selectedSize = uiState.selectedKernelSize,
-                        onSizeSelected = { viewModel.onKernelSizeSelected(it) }
-                    )
+                    // Kernel Size and Intensity Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Kernel Size Selection
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Kernel Size",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            KernelSizeSelector(
+                                selectedSize = uiState.selectedKernelSize,
+                                onSizeSelected = { viewModel.onKernelSizeSelected(it) }
+                            )
+                        }
+
+                        // Intensity Selection
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Intensity",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            IntensitySelector(
+                                selectedIntensity = uiState.selectedIntensity,
+                                onIntensitySelected = { viewModel.onIntensitySelected(it) }
+                            )
+                        }
+                    }
 
                     // Interactive Kernel Preview
                     uiState.kernelPreview?.let { preview ->
@@ -332,7 +355,7 @@ fun HomeScreen(
                         } else {
                             ResultHolder.clearInput()
                         }
-                        onStartVisualization(uri, uiState.selectedBlurType, uiState.selectedKernelSize)
+                        onStartVisualization(uri, uiState.selectedBlurType, uiState.selectedKernelSize, uiState.selectedIntensity)
                     }
                 },
                 enabled = uiState.selectedImageUri != null && !uiState.isLoading,
@@ -1175,15 +1198,17 @@ private fun KernelSizeSelector(
     onSizeSelected: (KernelSize) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         KernelSize.entries.forEach { size ->
             val isSelected = size == selectedSize
             Box(
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceContainerHigh
@@ -1192,14 +1217,55 @@ private fun KernelSizeSelector(
                         width = if (isSelected) 2.dp else 0.dp,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.outline,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                     .clickable { onSizeSelected(size) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = size.displayName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntensitySelector(
+    selectedIntensity: BlurIntensity,
+    onIntensitySelected: (BlurIntensity) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        BlurIntensity.entries.forEach { intensity ->
+            val isSelected = intensity == selectedIntensity
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                    .border(
+                        width = if (isSelected) 2.dp else 0.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .clickable { onIntensitySelected(intensity) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = intensity.displayName,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurfaceVariant
