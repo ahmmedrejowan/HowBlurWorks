@@ -1,8 +1,10 @@
 package com.rejown.howblurworks.presentation.home
 
+import android.app.Activity
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -54,6 +57,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -105,10 +109,17 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val activity = context as? Activity
 
     var showImageSourceSheet by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val theorySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Handle back button press
+    BackHandler {
+        showExitDialog = true
+    }
 
     // Temp file for camera capture
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -410,6 +421,50 @@ fun HomeScreen(
                     }
                 )
             }
+        }
+
+        // Exit Confirmation Dialog
+        if (showExitDialog) {
+            AlertDialog(
+                onDismissRequest = { showExitDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.BlurOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text(
+                        text = "Exit App?",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Are you sure you want to exit How Blur Works?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showExitDialog = false
+                            activity?.finish()
+                        }
+                    ) {
+                        Text("Exit")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = { showExitDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
