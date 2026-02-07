@@ -157,22 +157,25 @@ fun VisualizationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Kernel and Pixel Info - stacked vertically
-                KernelDisplayCard(
-                    kernelValues = uiState.kernelDisplayValues,
-                    blurType = uiState.blurType,
-                    kernelSize = uiState.kernelSize,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Kernel and Pixel Info - side by side
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    KernelDisplayCard(
+                        kernelValues = uiState.kernelDisplayValues,
+                        blurType = uiState.blurType,
+                        kernelSize = uiState.kernelSize,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                PixelInfoCard(
-                    calculation = uiState.currentCalculation,
-                    currentX = uiState.currentX,
-                    currentY = uiState.currentY,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    PixelInfoCard(
+                        calculation = uiState.currentCalculation,
+                        currentX = uiState.currentX,
+                        currentY = uiState.currentY,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -374,8 +377,10 @@ private fun KernelDisplayCard(
     kernelSize: KernelSize,
     modifier: Modifier = Modifier
 ) {
+    val cardHeight = 130.dp
+
     Card(
-        modifier = modifier,
+        modifier = modifier.height(cardHeight),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -383,9 +388,10 @@ private fun KernelDisplayCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             // Header
             Row(
@@ -399,70 +405,65 @@ private fun KernelDisplayCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${kernelSize.displayName} • ${blurType.displayName}",
+                    text = kernelSize.displayName,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Kernel matrix display
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+            // Kernel matrix display - centered
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                // Dynamic cell size based on kernel size
-                val cellSize = when (kernelValues.size) {
-                    3 -> 28.dp
-                    5 -> 20.dp
-                    7 -> 14.dp
-                    9 -> 11.dp
-                    else -> 9.dp
-                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                ) {
+                    // Compact cell sizes for side-by-side layout
+                    val cellSize = when (kernelValues.size) {
+                        3 -> 20.dp
+                        5 -> 14.dp
+                        7 -> 10.dp
+                        9 -> 8.dp
+                        else -> 7.dp
+                    }
 
-                kernelValues.forEachIndexed { rowIndex, row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                        row.forEachIndexed { colIndex, value ->
-                            val isCenter = rowIndex == kernelValues.size / 2 &&
-                                    colIndex == row.size / 2
-                            val valueFloat = value.toFloatOrNull() ?: 0f
-                            val isActive = valueFloat > 0.001f
+                    kernelValues.forEachIndexed { rowIndex, row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+                            row.forEachIndexed { colIndex, value ->
+                                val isCenter = rowIndex == kernelValues.size / 2 &&
+                                        colIndex == row.size / 2
+                                val valueFloat = value.toFloatOrNull() ?: 0f
+                                val isActive = valueFloat > 0.001f
 
-                            Box(
-                                modifier = Modifier
-                                    .size(cellSize)
-                                    .background(
-                                        when {
-                                            isCenter -> MaterialTheme.colorScheme.primary
-                                            isActive -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                                            else -> MaterialTheme.colorScheme.surfaceContainerHighest
-                                        },
-                                        RoundedCornerShape(2.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // Show values only for smaller kernels
-                                if (kernelValues.size <= 5 && isActive) {
-                                    val displayText = when {
-                                        valueFloat == 0f -> ""
-                                        valueFloat < 0.01f -> "·"
-                                        else -> String.format("%.1f", valueFloat).removePrefix("0")
-                                    }
-                                    Text(
-                                        text = displayText,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontSize = if (kernelValues.size <= 3) 7.sp else 5.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = if (isCenter) MaterialTheme.colorScheme.onPrimary
-                                        else MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
+                                Box(
+                                    modifier = Modifier
+                                        .size(cellSize)
+                                        .background(
+                                            when {
+                                                isCenter -> MaterialTheme.colorScheme.primary
+                                                isActive -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                                                else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                                            },
+                                            RoundedCornerShape(2.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // Only highlight center for visual reference
                                 }
                             }
                         }
                     }
                 }
             }
+
+            // Footer
+            Text(
+                text = blurType.displayName,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -474,8 +475,10 @@ private fun PixelInfoCard(
     currentY: Int,
     modifier: Modifier = Modifier
 ) {
+    val cardHeight = 130.dp
+
     Card(
-        modifier = modifier,
+        modifier = modifier.height(cardHeight),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -483,9 +486,10 @@ private fun PixelInfoCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             // Header
             Row(
@@ -494,7 +498,7 @@ private fun PixelInfoCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Pixel Transform",
+                    text = "Pixel",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -505,84 +509,87 @@ private fun PixelInfoCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // Color transform display - centered
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                if (calculation != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Original color
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(
+                                        Color(calculation.centerPixel.color),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "In",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-            if (calculation != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Original color
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    Color(calculation.centerPixel.color),
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                    RoundedCornerShape(10.dp)
-                                )
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Text(
-                            text = "Input",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "→",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // Result color
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(
+                                        Color(calculation.resultColor),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Out",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-
-                    Spacer(modifier = Modifier.width(20.dp))
-
+                } else {
                     Text(
-                        text = "→",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    // Result color
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    Color(calculation.resultColor),
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                    RoundedCornerShape(10.dp)
-                                )
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Output",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(70.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Tap Start to begin",
+                        text = "Waiting...",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+
+            // Footer
+            Text(
+                text = "Color Transform",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
