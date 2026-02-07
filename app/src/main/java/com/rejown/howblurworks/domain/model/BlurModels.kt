@@ -34,10 +34,11 @@ enum class BlurIntensity(val displayName: String, val sigma: Float, val passes: 
 
 /**
  * Processing speed presets
+ * Note: AUTO's duration is dynamically set from Settings, not the enum value
  */
 enum class ProcessSpeed(val displayName: String, val targetDurationSec: Int) {
-    SLOW("Slow", 60),
-    AUTO("Auto", 30),
+    SLOW("Slow", 45),
+    AUTO("Auto", 30), // This value is overridden by Settings
     FAST("Fast", 15),
     INSTANT("Instant", 0)
 }

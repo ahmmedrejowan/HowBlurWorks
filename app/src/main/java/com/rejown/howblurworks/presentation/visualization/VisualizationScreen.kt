@@ -195,7 +195,8 @@ fun VisualizationScreen(
                     SpeedSelector(
                         selectedSpeed = uiState.speed,
                         onSpeedSelected = { viewModel.onSpeedChanged(it) },
-                        enabled = true
+                        enabled = true,
+                        settingsDurationSec = uiState.settingsDurationSec
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -775,11 +776,12 @@ private fun ControlsSection(
 private fun SpeedSelector(
     selectedSpeed: ProcessSpeed,
     onSpeedSelected: (ProcessSpeed) -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    settingsDurationSec: Int = 30
 ) {
     val speedDescriptions = mapOf(
-        ProcessSpeed.SLOW to "60 seconds • Best for learning, see every detail",
-        ProcessSpeed.AUTO to "30 seconds • Balanced speed and visibility",
+        ProcessSpeed.SLOW to "45 seconds • Best for learning, see every detail",
+        ProcessSpeed.AUTO to "$settingsDurationSec seconds • Uses your Settings duration",
         ProcessSpeed.FAST to "15 seconds • Quick overview of the process",
         ProcessSpeed.INSTANT to "Immediate • Skip animation, see result only"
     )

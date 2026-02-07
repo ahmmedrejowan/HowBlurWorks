@@ -32,22 +32,4 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.updateDefaultDuration(duration)
         }
     }
-
-    fun updateShowKernelOverlay(show: Boolean) {
-        viewModelScope.launch {
-            repository.updateShowKernelOverlay(show)
-        }
-    }
-
-    fun updateShowPixelInfo(show: Boolean) {
-        viewModelScope.launch {
-            repository.updateShowPixelInfo(show)
-        }
-    }
-
-    fun updateShowScanline(show: Boolean) {
-        viewModelScope.launch {
-            repository.updateShowScanline(show)
-        }
-    }
 }

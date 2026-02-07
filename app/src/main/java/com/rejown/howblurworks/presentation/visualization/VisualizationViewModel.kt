@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.rejown.howblurworks.data.ResultHolder
+import com.rejown.howblurworks.data.UserPreferencesRepository
 import androidx.lifecycle.viewModelScope
 import com.rejown.howblurworks.domain.engine.BlurProcessor
 import com.rejown.howblurworks.domain.engine.KernelGenerator
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -47,6 +49,8 @@ data class VisualizationUiState(
     val kernelSize: KernelSize = KernelSize.SIZE_3,
     val intensity: BlurIntensity = BlurIntensity.MEDIUM,
     val error: String? = null,
+    // Settings-based duration for AUTO mode (in seconds)
+    val settingsDurationSec: Int = 30,
     // Pause/Resume state
     val pausedAtX: Int = 0,
     val pausedAtY: Int = 0,
@@ -83,6 +87,7 @@ data class VisualizationUiState(
         if (kernelSize != other.kernelSize) return false
         if (intensity != other.intensity) return false
         if (error != other.error) return false
+        if (settingsDurationSec != other.settingsDurationSec) return false
         if (pausedAtX != other.pausedAtX) return false
         if (pausedAtY != other.pausedAtY) return false
         if (pausedBitmap != other.pausedBitmap) return false
@@ -113,6 +118,7 @@ data class VisualizationUiState(
         result = 31 * result + kernelSize.hashCode()
         result = 31 * result + intensity.hashCode()
         result = 31 * result + (error?.hashCode() ?: 0)
+        result = 31 * result + settingsDurationSec
         result = 31 * result + pausedAtX
         result = 31 * result + pausedAtY
         result = 31 * result + (pausedBitmap?.hashCode() ?: 0)
@@ -128,6 +134,7 @@ class VisualizationViewModel : ViewModel() {
     private val blurProcessor = BlurProcessor()
     private var processingJob: Job? = null
     private var startTimeMs: Long = 0
+    private var preferencesRepository: UserPreferencesRepository? = null
 
     fun initialize(
         context: Context,
@@ -147,6 +154,11 @@ class VisualizationViewModel : ViewModel() {
             }
 
             try {
+                // Read settings for default duration
+                preferencesRepository = UserPreferencesRepository(context)
+                val settings = preferencesRepository!!.settingsFlow.first()
+                val settingsDuration = settings.durationSeconds
+
                 // Check if this is a sample image (passed via ResultHolder)
                 val bitmap: Bitmap? = if (imageUri.startsWith("sample://")) {
                     ResultHolder.inputBitmap
@@ -160,10 +172,11 @@ class VisualizationViewModel : ViewModel() {
                     val kernel = KernelGenerator.generate(kernelConfig)
                     val kernelDisplay = KernelGenerator.formatForDisplay(kernel)
 
-                    val autoSpeedConfig = blurProcessor.calculateAutoSpeed(
+                    // Use settings duration for AUTO mode
+                    val autoSpeedConfig = calculateAutoSpeedWithDuration(
                         bitmap.width,
                         bitmap.height,
-                        ProcessSpeed.AUTO
+                        settingsDuration
                     )
 
                     _uiState.update {
@@ -174,6 +187,7 @@ class VisualizationViewModel : ViewModel() {
                             kernelDisplayValues = kernelDisplay,
                             totalPixels = bitmap.width * bitmap.height,
                             autoSpeedConfig = autoSpeedConfig,
+                            settingsDurationSec = settingsDuration,
                             isLoading = false
                         )
                     }
@@ -194,6 +208,38 @@ class VisualizationViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    /**
+     * Calculate auto speed config with a specific duration
+     */
+    private fun calculateAutoSpeedWithDuration(
+        width: Int,
+        height: Int,
+        targetDurationSec: Int
+    ): AutoSpeedConfig {
+        val totalPixels = width * height
+
+        if (targetDurationSec == 0) {
+            return AutoSpeedConfig(
+                emitInterval = totalPixels,
+                delayMs = 0,
+                totalFrames = 1,
+                estimatedDurationSec = 0
+            )
+        }
+
+        val targetFps = 30
+        val totalFrames = targetDurationSec * targetFps
+        val emitInterval = maxOf(1, totalPixels / totalFrames)
+        val delayMs = 1000L / targetFps
+
+        return AutoSpeedConfig(
+            emitInterval = emitInterval,
+            delayMs = delayMs,
+            totalFrames = minOf(totalFrames, totalPixels),
+            estimatedDurationSec = targetDurationSec
+        )
     }
 
     fun startProcessing() {
@@ -341,11 +387,20 @@ class VisualizationViewModel : ViewModel() {
     }
 
     fun onSpeedChanged(speed: ProcessSpeed) {
-        val bitmap = _uiState.value.originalBitmap ?: return
-        val autoSpeedConfig = blurProcessor.calculateAutoSpeed(
+        val state = _uiState.value
+        val bitmap = state.originalBitmap ?: return
+
+        // For AUTO mode, use settings duration; otherwise use enum's duration
+        val targetDuration = if (speed == ProcessSpeed.AUTO) {
+            state.settingsDurationSec
+        } else {
+            speed.targetDurationSec
+        }
+
+        val autoSpeedConfig = calculateAutoSpeedWithDuration(
             bitmap.width,
             bitmap.height,
-            speed
+            targetDuration
         )
 
         _uiState.update {

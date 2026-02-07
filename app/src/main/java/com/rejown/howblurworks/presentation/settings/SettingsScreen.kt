@@ -1,6 +1,5 @@
 package com.rejown.howblurworks.presentation.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,7 +29,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -157,7 +154,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Target time for visualization completion",
+                        text = "Target time for visualization (used in Auto speed mode)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -168,66 +165,32 @@ fun SettingsScreen(
                         SegmentedButton(
                             selected = settings.defaultDuration == 0,
                             onClick = { viewModel.updateDefaultDuration(0) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 4)
                         ) {
-                            Text("15s")
+                            Text("5s")
                         }
                         SegmentedButton(
                             selected = settings.defaultDuration == 1,
                             onClick = { viewModel.updateDefaultDuration(1) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 4)
                         ) {
-                            Text("30s")
+                            Text("15s")
                         }
                         SegmentedButton(
                             selected = settings.defaultDuration == 2,
                             onClick = { viewModel.updateDefaultDuration(2) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
+                            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 4)
                         ) {
-                            Text("60s")
+                            Text("30s")
+                        }
+                        SegmentedButton(
+                            selected = settings.defaultDuration == 3,
+                            onClick = { viewModel.updateDefaultDuration(3) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 3, count = 4)
+                        ) {
+                            Text("45s")
                         }
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Display Options Section
-            SectionHeader(
-                icon = Icons.Default.Tune,
-                title = "Display Options"
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                )
-            ) {
-                Column {
-                    SettingsSwitchItem(
-                        title = "Kernel Overlay",
-                        subtitle = "Show kernel cursor on image",
-                        checked = settings.showKernelOverlay,
-                        onCheckedChange = { viewModel.updateShowKernelOverlay(it) }
-                    )
-
-                    SettingsSwitchItem(
-                        title = "Pixel Info",
-                        subtitle = "Show input/output color preview",
-                        checked = settings.showPixelInfo,
-                        onCheckedChange = { viewModel.updateShowPixelInfo(it) }
-                    )
-
-                    SettingsSwitchItem(
-                        title = "Scanline Effect",
-                        subtitle = "Show horizontal progress line",
-                        checked = settings.showScanline,
-                        onCheckedChange = { viewModel.updateShowScanline(it) }
-                    )
                 }
             }
 
@@ -309,40 +272,6 @@ private fun SectionHeader(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-@Composable
-private fun SettingsSwitchItem(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
         )
     }
 }
